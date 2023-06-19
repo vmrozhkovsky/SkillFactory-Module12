@@ -9,6 +9,7 @@ if (File.Exists("user.json"))
 }
 else
 {
+    Console.WriteLine($"Список пользователей не обнаружен.{Environment.NewLine}Добавление нового пользователя...");
     UserAdd();
     UserListWrite();
     Console.WriteLine("Новый пользователь добавлен.");
