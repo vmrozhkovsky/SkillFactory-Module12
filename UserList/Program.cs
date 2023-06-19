@@ -1,12 +1,18 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.ComponentModel.Design;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using UserList;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 List<User> userList = new List<User>();
-await UserListRead();
+if (File.Exists("user.json"))
+{
+    UserListRead();
+}
+else
+{
+    UserAdd();
+    UserListWrite();
+    Console.WriteLine("Новый пользователь добавлен.");
+}
 if (UserFunction() == 1)
 {
     UserAdd();
@@ -23,7 +29,14 @@ else
             Console.WriteLine($"Приветствуем {userList[userIndex].Name}. Вы - не премиум пользователь.");
             ShowAds();
         }
-        Console.WriteLine($"Приветствуем {userList[userIndex].Name}.");
+        else
+        {
+            Console.WriteLine($"Приветствуем {userList[userIndex].Name}.");
+        }
+    }
+    else
+    {
+        Console.WriteLine("Пользователь не найден.");
     }
 }
 
@@ -50,13 +63,13 @@ int UserFunction()
     }
     return userFunction;
 }
+
 void UserAdd()
 {
     bool correctInput = true;
     string name = "";
     string login = "";
     bool isPremium;
-    
     while (correctInput)
     {
         try
@@ -77,7 +90,6 @@ void UserAdd()
             Console.WriteLine(e.Message);
         }
     }
-    
     var rand = new Random();
     if (rand.Next(0,1) == 1)
     {
@@ -97,34 +109,37 @@ int UserRead()
 {
     bool correctInput = true;
     string login = "";
-    while (correctInput)
+    if (!(userList.Count == 0))
     {
-        try
+        while (correctInput)
         {
-            Console.WriteLine($"Введите логин пользователя:");
-            login = Console.ReadLine();
-            if (login == "")
+            try
             {
-                throw new Exception("Нельзя вводить пустые строки.");
+                Console.WriteLine($"Введите логин пользователя:");
+                login = Console.ReadLine();
+                if (login == "")
+                {
+                    throw new Exception("Нельзя вводить пустые строки.");
+                }
+                correctInput = false;
             }
-            correctInput = false;
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
-        catch (Exception e)
+        foreach (User item in userList)
         {
-            Console.WriteLine(e.Message);
+            if (item.Login == login)
+            {
+                return userList.IndexOf(item);
+            }
         }
     }
-
-    foreach (User item in userList)
-    {
-        if (item.Login == login)
-        {
-            return userList.IndexOf(item);
-        }
-    }
-    Console.WriteLine("Пользователь не найден.");
+    Console.WriteLine("Список пользователей пуст.");
     return -1;
 }
+
 void ShowAds()
 {
     var rand = new Random();
@@ -144,33 +159,15 @@ void ShowAds()
             break;
     }
 }
-async Task UserListWrite()
+
+void UserListWrite()
 {
-    using (FileStream fs = new FileStream("user.json", FileMode.Append))
-    {
-        foreach (User item in userList)
-        {
-            await JsonSerializer.SerializeAsync<User>(fs, item);
-        }
-    }
+    var append = JsonSerializer.Serialize(userList);
+    File.WriteAllText(@"user.json", append);
 }
 
-// void UserListRead()
-// {
-//     // using (StreamReader fs = File.OpenText("user.json"))
-//     // {
-//         //Console.WriteLine(File.ReadAllText("user.json"));
-//         //User user = JsonSerializer.Deserialize<User>(File.ReadAllText("user.json"));
-//         //Console.WriteLine(user.Name);
-//         //List<User> usr = new List<User>();
-//         userList = JsonSerializer.Deserialize<List<User>>(File.ReadAllText("user.json"));
-//     //}
-// }
-async Task UserListRead()
+void UserListRead()
 {
-    using (FileStream fs = File.OpenRead("user.json"))
-    {
-        userList = await JsonSerializer.DeserializeAsync<List<User>>(fs);
-        Console.WriteLine(userList[1].Name);
-    }
+    string json = File.ReadAllText("user.json");
+    userList = JsonConvert.DeserializeObject<List<User>>(json);
 }
